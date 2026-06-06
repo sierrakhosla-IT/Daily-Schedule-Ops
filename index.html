@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daybook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Mulish:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Caprasimo&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --paper:#F8F3EB;  --paper-2:#F3ECDF;
+  --card:#FFFCF5;   --card-2:#FBF5EA;
+  --target-bg:#FBE4EA;
+  --ink:#322C24;    --ink-2:#6E6557;  --ink-3:#A89D89;
+  --line:rgba(50,44,36,.10);  --line-2:rgba(50,44,36,.17);  --line-3:rgba(50,44,36,.26);
+  --accent:#E0881A;           --accent-soft:rgba(224,136,26,.13);
+  --clay:#A9B0E8;             --clay-soft:rgba(169,176,232,.15);
+  --sage:#7BC0A4;             --sage-soft:rgba(123,192,164,.15);
+  --danger:#D67C82;           --butter:#F5BCC7;
+  --serif:'Newsreader',Georgia,serif;
+  --sans:'Mulish',system-ui,sans-serif;
+  --display:'Caprasimo',Georgia,serif;
+  --r:13px;  --r-sm:9px;
+  --sh-1:0 1px 3px rgba(50,44,36,.06);
+  --sh-2:0 4px 16px rgba(50,44,36,.10);
+  --sh-3:0 20px 54px rgba(50,44,36,.20);
+}
+html,body{height:100%}
+body{font-family:var(--sans);background:var(--paper);color:var(--ink);font-size:14px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+::selection{background:var(--accent-soft)}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:6px}
+::-webkit-scrollbar-thumb:hover{background:var(--line-3)}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+[contenteditable]{outline:none}
+.ph:empty::before{content:attr(data-ph);color:var(--ink-3);font-style:italic;pointer-events:none}
+
+/* ── HEADER ─────────────────────────────────────────────── */
+.topbar{flex-shrink:0;display:flex;align-items:center;gap:22px;padding:14px 26px 12px;border-bottom:1px solid var(--line)}
+.brand{flex-shrink:0}
+.mark{font-family:var(--display);font-size:21px;letter-spacing:-.02em;line-height:1}
+.mark .dot{color:var(--accent)}
+.date{font-size:10px;font-weight:700;letter-spacing:.07em;color:var(--ink-3);text-transform:uppercase;margin-top:4px}
+.targets{flex:1;display:flex;align-items:stretch;gap:11px;min-width:0}
+.t-eyebrow{writing-mode:vertical-rl;transform:rotate(180deg);font-family:var(--serif);font-style:italic;
+  font-size:10.5px;color:var(--ink-3);flex-shrink:0;letter-spacing:.02em}
+.target{flex:1;min-width:0;display:flex;align-items:flex-start;gap:10px;background:var(--target-bg);
+  border:1px solid var(--line);border-radius:10px;padding:8px 13px;box-shadow:var(--sh-1);transition:border-color .18s}
+.target:focus-within{border-color:var(--accent)}
+.target-tag{font-family:var(--serif);font-style:italic;font-size:13px;color:var(--accent);line-height:1.6;flex-shrink:0}
+.target-text{flex:1;min-width:0;font-family:var(--serif);font-size:16.5px;line-height:1.4;color:var(--ink);letter-spacing:-.005em}
+.topbar-actions{display:flex;align-items:center;gap:7px;flex-shrink:0}
+.icon-btn{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  color:var(--ink-2);border:1px solid var(--line-2);background:var(--card);transition:all .16s;position:relative}
+.icon-btn:hover{color:var(--ink);border-color:var(--line-3);box-shadow:var(--sh-1)}
+.icon-btn svg{width:17px;height:17px}
+.hist-dot{position:absolute;top:6px;right:7px;width:5px;height:5px;border-radius:50%;background:var(--accent);
+  opacity:0;transform:scale(.4);transition:all .2s}
+.hist-dot.on{opacity:1;transform:scale(1)}
+
+/* ── DESK ────────────────────────────────────────────────── */
+.desk{flex:1;display:grid;grid-template-columns:2fr 3fr;gap:13px;padding:13px 26px 18px;min-height:0}
+.col{display:flex;flex-direction:column;gap:11px;min-height:0}
+
+/* ── ZONE BASE ───────────────────────────────────────────── */
+.zone{display:flex;flex-direction:column;background:var(--card-2);border:1px solid var(--line);
+  border-radius:var(--r);box-shadow:var(--sh-1);min-height:0}
+.zone-head{flex-shrink:0;padding:11px 14px 9px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;gap:12px}
+.zone-name{font-family:var(--display);font-size:15px;letter-spacing:-.01em;line-height:1;
+  display:flex;align-items:center;gap:8px}
+.zone-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.zone-name-col{display:flex;flex-direction:column;gap:2px}
+.zone-sub{font-family:var(--serif);font-style:italic;font-size:10.5px;color:var(--ink-3);padding-left:15px;line-height:1}
+.zone-count{font-size:11px;font-weight:700;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.zone-body{flex:1;overflow-y:auto;padding:7px 9px 10px;display:flex;flex-direction:column;gap:6px}
+.zone-body.drag-over{background:var(--accent-soft);border-radius:0 0 var(--r) var(--r)}
+.zone-empty{font-family:var(--serif);font-style:italic;color:var(--ink-3);font-size:13px;
+  text-align:center;padding:22px 16px;line-height:1.8}
+
+/* ── BRAIN DUMP ──────────────────────────────────────────── */
+.zone-brain{flex:1}
+.brain-input-row{flex-shrink:0;padding:7px 11px 6px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.45)}
+.brain-input-row svg{width:13px;height:13px;color:var(--ink-3);flex-shrink:0}
+.brain-input{flex:1;font-family:var(--sans);font-size:13.5px;font-weight:600;color:var(--ink);
+  background:none;border:none;outline:none;caret-color:var(--accent);padding:1px 0}
+.brain-input::placeholder{color:var(--ink-3);font-weight:500}
+.brain-key{font-size:9.5px;font-weight:700;letter-spacing:.04em;color:var(--ink-3);
+  background:var(--line);padding:1px 5px;border-radius:4px;flex-shrink:0}
+
+/* ── SLIPS ───────────────────────────────────────────────── */
+.slip{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--line-3);
+  border-radius:7px;padding:7px 9px 7px 10px;box-shadow:var(--sh-1);cursor:grab;
+  display:flex;align-items:center;gap:8px;transition:box-shadow .15s,border-left-color .15s;user-select:none}
+.slip:hover{box-shadow:var(--sh-2);border-left-color:var(--accent)}
+.slip.is-dragging{opacity:.3;pointer-events:none}
+.slip-text{flex:1;min-width:0;font-size:13.5px;font-weight:600;line-height:1.4;color:var(--ink);word-break:break-word}
+.slip-x{flex-shrink:0;opacity:0;color:var(--ink-3);font-size:18px;line-height:1;padding:0 3px;
+  border-radius:4px;transition:opacity .14s,color .14s}
+.slip:hover .slip-x{opacity:1}
+.slip-x:hover{color:var(--danger)}
+
+/* ── CARDS ───────────────────────────────────────────────── */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-sm);
+  padding:9px 10px 8px;box-shadow:var(--sh-1);cursor:grab;position:relative;
+  transition:box-shadow .15s,border-color .15s;user-select:none}
+.card:hover{box-shadow:var(--sh-2);border-color:var(--line-2)}
+.card.is-dragging{opacity:.3;pointer-events:none}
+.card-now{border-left:3px solid var(--accent);padding-left:8px}
+.now-badge{display:inline-flex;align-items:center;font-size:9px;font-weight:800;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--accent);background:var(--accent-soft);
+  padding:2px 7px;border-radius:20px;margin-bottom:4px;line-height:1}
+.card-row{display:flex;align-items:flex-start;gap:9px}
+.card-check{width:17px;height:17px;border-radius:50%;border:1.5px solid var(--line-3);flex-shrink:0;
+  margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all .15s;cursor:pointer}
+.card-check:hover{border-color:var(--sage);background:var(--sage-soft)}
+.card-check svg{width:9px;height:9px;color:var(--sage);opacity:0;transition:opacity .14s}
+.card-check:hover svg{opacity:1}
+.card-title{flex:1;min-width:0;font-size:14px;font-weight:600;line-height:1.42;color:var(--ink);
+  word-break:break-word;letter-spacing:-.005em;cursor:text}
+.card-tools{position:absolute;top:7px;right:8px;display:flex;gap:2px;opacity:0;transition:opacity .14s}
+.card:hover .card-tools{opacity:1}
+.tool{font-size:10.5px;font-weight:700;color:var(--ink-3);padding:3px 6px;border-radius:5px;
+  line-height:1;transition:all .14s;letter-spacing:.01em}
+.tool:hover{color:var(--ink);background:var(--card-2)}
+.tool.del:hover{color:var(--danger);background:rgba(214,124,130,.12)}
+.tool.up:hover{color:var(--clay);background:var(--clay-soft)}
+
+/* ── PENDING META ────────────────────────────────────────── */
+.pend-meta{margin-top:6px;padding-top:5px;border-top:1px dashed var(--line-2);display:flex;flex-direction:column;gap:3px}
+.pend-field{display:flex;align-items:baseline;gap:7px}
+.pend-label{font-size:9px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-3);white-space:nowrap;flex-shrink:0;width:66px}
+.pend-value{font-size:12px;font-weight:500;color:var(--ink-2);line-height:1.4;flex:1;min-width:0;cursor:text}
+.pend-value.ph:empty::before{font-size:11.5px}
+
+/* ── TODAY'S WINS ────────────────────────────────────────── */
+.zone-wins{flex:0 0 182px}
+.zone-wins .zone-body{gap:3px;padding:5px 9px 8px}
+.win-item{display:flex;align-items:center;gap:9px;padding:5px 7px;border-radius:6px;transition:background .14s}
+.win-item:hover{background:var(--card)}
+.win-check{width:15px;height:15px;border-radius:50%;background:var(--sage-soft);border:1.5px solid var(--sage);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.win-check svg{width:8px;height:8px;color:var(--sage)}
+.win-text{flex:1;font-size:13px;font-weight:500;color:var(--ink-3);
+  text-decoration:line-through;text-decoration-color:var(--line-3);line-height:1.4;word-break:break-word}
+.win-restore{opacity:0;font-size:9.5px;font-weight:800;letter-spacing:.03em;color:var(--ink-3);
+  padding:2px 6px;border-radius:20px;transition:all .14s;flex-shrink:0;white-space:nowrap}
+.win-item:hover .win-restore{opacity:1}
+.win-restore:hover{color:var(--accent);background:var(--accent-soft)}
+
+/* ── BOTTOM ROW ──────────────────────────────────────────── */
+.bottom-row{flex:0 0 214px;display:flex;gap:11px;min-height:0}
+.zone-pending{flex:1;overflow:hidden}
+.zone-notes{flex:1;overflow:hidden}
+.notes-area{flex:1;min-height:0;resize:none;font-family:var(--sans);font-size:13px;font-weight:500;
+  line-height:1.7;color:var(--ink);background:transparent;border:none;outline:none;
+  padding:8px 13px 10px;caret-color:var(--accent);width:100%}
+.notes-area::placeholder{color:var(--ink-3);font-style:italic;font-weight:400}
+
+/* ── ACTIVE WORK ─────────────────────────────────────────── */
+.zone-active{flex:1}
+
+/* ── HISTORY DRAWER ──────────────────────────────────────── */
+.scrim{position:fixed;inset:0;background:rgba(50,44,36,.28);backdrop-filter:blur(2px);
+  opacity:0;pointer-events:none;transition:opacity .26s;z-index:60}
+.scrim.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;height:100%;width:370px;max-width:92vw;z-index:70;
+  background:var(--paper);border-left:1px solid var(--line-2);box-shadow:var(--sh-3);
+  transform:translateX(102%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
+.drawer.open{transform:translateX(0)}
+.drawer-head{padding:18px 20px 13px;border-bottom:1px solid var(--line);
+  display:flex;align-items:flex-start;justify-content:space-between}
+.drawer-title{font-family:var(--display);font-size:20px;letter-spacing:-.01em;line-height:1.1}
+.drawer-sub{font-size:11px;color:var(--ink-3);font-weight:500;margin-top:3px}
+.drawer-close{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  color:var(--ink-2);transition:all .15s}
+.drawer-close:hover{background:var(--card);color:var(--ink)}
+.drawer-close svg{width:15px;height:15px}
+.drawer-body{flex:1;overflow-y:auto;padding:6px 12px 24px}
+.hist-empty{font-family:var(--serif);font-style:italic;color:var(--ink-3);text-align:center;
+  padding:48px 20px;font-size:13.5px;line-height:1.8}
+.h-entry{display:flex;gap:12px;padding:8px;border-radius:8px;transition:background .14s}
+.h-entry:hover{background:var(--card-2)}
+.h-icon{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;background:var(--card);border:1px solid var(--line-2);margin-top:1px}
+.h-icon svg{width:12px;height:12px}
+.h-created .h-icon{color:var(--accent)}  .h-moved .h-icon{color:var(--ink-2)}
+.h-completed .h-icon{color:var(--sage)}  .h-deleted .h-icon{color:var(--danger)}
+.h-restored .h-icon{color:var(--clay)}
+.h-main{flex:1;min-width:0}
+.h-line{font-size:12.5px;line-height:1.4;color:var(--ink)}
+.h-line b{font-weight:700}
+.h-meta{font-size:10px;font-weight:600;color:var(--ink-3);margin-top:2px;display:flex;align-items:center;gap:8px}
+.h-restore-btn{font-size:10.5px;font-weight:800;color:var(--accent);padding:1px 4px;
+  border-radius:4px;transition:all .14s}
+.h-restore-btn:hover{text-decoration:underline}
+
+/* ── TOAST ───────────────────────────────────────────────── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(16px);
+  background:var(--ink);color:#fff;font-size:13px;font-weight:600;padding:10px 12px 10px 18px;
+  border-radius:30px;z-index:80;display:flex;align-items:center;gap:12px;box-shadow:var(--sh-3);
+  opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+.toast-undo{font-weight:800;color:var(--butter);padding:3px 11px;border-radius:20px;
+  background:rgba(255,255,255,.10);transition:background .15s}
+.toast-undo:hover{background:rgba(255,255,255,.20)}
+
+/* ── DRAG GHOST ──────────────────────────────────────────── */
+.drag-ghost{position:fixed;pointer-events:none;z-index:100;opacity:.88;
+  background:var(--card);border:1px solid var(--line-2);border-left:3px solid var(--accent);
+  border-radius:var(--r-sm);box-shadow:var(--sh-3);padding:9px 12px;font-size:13px;
+  font-weight:600;color:var(--ink);max-width:280px;line-height:1.4;
+  transform:rotate(1.2deg);font-family:var(--sans)}
+</style>
+</head>
+<body style="font-family: Newsreader">
+
+<!-- HEADER -->
+<header class="topbar">
+  <div class="brand">
+    <div class="mark">Daybook<span class="dot">.</span></div>
+    <div class="date" id="date-label">—</div>
+  </div>
+  <div class="targets">
+    <div class="t-eyebrow">today</div>
+    <div class="target">
+      <span class="target-tag">01</span>
+      <div class="target-text ph" id="t1" contenteditable="true" spellcheck="false" data-ph="The first thing that matters today…"></div>
+    </div>
+    <div class="target">
+      <span class="target-tag">02</span>
+      <div class="target-text ph" id="t2" contenteditable="true" spellcheck="false" data-ph="The second thing that matters…"></div>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <button class="icon-btn" id="hist-btn" title="History">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l3 2"/>
+      </svg>
+      <span class="hist-dot" id="hist-dot"></span>
+    </button>
+  </div>
+</header>
+
+<!-- DESK -->
+<main class="desk">
+
+  <!-- LEFT COLUMN -->
+  <div class="col">
+    <div class="zone zone-brain">
+      <div class="zone-head">
+        <div class="zone-name-col">
+          <div class="zone-name"><span class="zone-dot" style="background:var(--accent)"></span>Brain Dump</div>
+          <div class="zone-sub">capture now · drag anywhere later</div>
+        </div>
+        <span class="zone-count" id="count-brain"></span>
+      </div>
+      <div class="brain-input-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        <input type="text" class="brain-input" id="brain-input" placeholder="Thought → Enter to capture" autocomplete="off" spellcheck="false">
+        <span class="brain-key" title="Press / anywhere to focus">/</span>
+      </div>
+      <div class="zone-body" id="body-brain" data-zone="brain">
+        <div class="zone-empty" id="empty-brain">Nothing yet.<br>Type above and press Enter.</div>
+      </div>
+    </div>
+
+    <div class="zone zone-wins">
+      <div class="zone-head">
+        <div class="zone-name"><span class="zone-dot" style="background:var(--sage)"></span>Today's Wins</div>
+        <span class="zone-count" id="count-wins"></span>
+      </div>
+      <div class="zone-body" id="body-wins" data-zone="wins">
+        <div class="zone-empty" id="empty-wins">Complete something to see it here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div class="col">
+    <div class="zone zone-active">
+      <div class="zone-head">
+        <div class="zone-name-col">
+          <div class="zone-name"><span class="zone-dot" style="background:var(--ink-2)"></span>Active Work</div>
+          <div class="zone-sub">top card = now · drag to reorder · check to complete</div>
+        </div>
+        <span class="zone-count" id="count-active"></span>
+      </div>
+      <div class="zone-body" id="body-active" data-zone="active">
+        <div class="zone-empty" id="empty-active">Drag from Brain Dump to start.</div>
+      </div>
+    </div>
+
+    <div class="bottom-row">
+      <div class="zone zone-pending">
+        <div class="zone-head">
+          <div class="zone-name"><span class="zone-dot" style="background:var(--clay)"></span>Pending</div>
+          <span class="zone-count" id="count-pending"></span>
+        </div>
+        <div class="zone-body" id="body-pending" data-zone="pending">
+          <div class="zone-empty" id="empty-pending">Nothing blocked.</div>
+        </div>
+      </div>
+
+      <div class="zone zone-notes" style="display:flex;flex-direction:column;">
+        <div class="zone-head">
+          <div class="zone-name-col">
+            <div class="zone-name"><span class="zone-dot" style="background:var(--ink-3)"></span>Work Notes</div>
+            <div class="zone-sub">tickets · serials · contacts</div>
+          </div>
+        </div>
+        <textarea class="notes-area" id="worknotes" spellcheck="false" placeholder="Ticket IDs, serial numbers, vendor contacts, meeting notes…"></textarea>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- HISTORY DRAWER -->
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-head">
+    <div>
+      <div class="drawer-title">History</div>
+      <div class="drawer-sub">Everything you did — restore anything deleted</div>
+    </div>
+    <button class="drawer-close" id="drawer-close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="drawer-body" id="drawer-body"></div>
+</aside>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span id="toast-msg"></span>
+  <button class="toast-undo" id="toast-undo">Undo</button>
+</div>
+
+<script>
+'use strict';
+const STORE_KEY = 'daybook-v3';
+
+// ── STATE ──────────────────────────────────────────────────
+let S = {
+  t1:'', t2:'',
+  brain:[],    // {id, text}
+  active:[],   // {id, text}
+  pending:[],  // {id, text, pendingOn, nextAction}
+  wins:[],     // {id, text, wonAt}
+  worknotes:'',
+  history:[]   // {id, type, text, ts, from?, to?, snapshot?}
+};
+let _undo = null, _toastT = null;
+
+// ── PERSISTENCE ────────────────────────────────────────────
+function load() { try { const r = localStorage.getItem(STORE_KEY); if(r) Object.assign(S, JSON.parse(r)); } catch(e){} }
+function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch(e){} }
+
+// ── UTILS ──────────────────────────────────────────────────
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function clip(s,n=44){ return s.length>n ? s.slice(0,n)+'…' : s; }
+
+const ZONE_LABEL = { brain:'Brain Dump', active:'Active Work', pending:'Pending', wins:"Today's Wins" };
+
+const HIST_ICON = {
+  created:'<path d="M12 5v14M5 12h14"/>',
+  moved:'<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  completed:'<path d="M20 6 9 17l-5-5"/>',
+  deleted:'<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/>',
+  restored:'<path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/>',
+};
+const HIST_LABEL = { created:'Added', moved:'Moved', completed:'Completed', deleted:'Deleted', restored:'Restored' };
+
+// ── HISTORY ────────────────────────────────────────────────
+function addHist(type, text, extra={}) {
+  S.history.unshift({ id:uid(), type, text, ts:Date.now(), ...extra });
+  if(S.history.length > 300) S.history.length = 300;
+  document.getElementById('hist-dot').classList.add('on');
+  save();
+}
+
+function renderHistory() {
+  const body = document.getElementById('drawer-body');
+  if(!S.history.length) {
+    body.innerHTML = '<div class="hist-empty">No history yet.<br>Start working and it will appear here.</div>';
+    return;
+  }
+  body.innerHTML = S.history.map(h => {
+    const time = new Date(h.ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    const icon = HIST_ICON[h.type] || HIST_ICON.created;
+    const label = HIST_LABEL[h.type] || h.type;
+    const route = h.from && h.to ? ` · ${h.from} → ${h.to}` : h.to ? ` · → ${h.to}` : '';
+    const rb = (h.type==='deleted' && h.snapshot)
+      ? `<button class="h-restore-btn" onclick="restoreHist('${h.id}')">Restore</button>` : '';
+    return `<div class="h-entry h-${h.type}">
+      <div class="h-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icon}</svg></div>
+      <div class="h-main">
+        <div class="h-line"><b>${label}</b> "${esc(clip(h.text,38))}" ${rb}</div>
+        <div class="h-meta">${time}${route}</div>
+      </div></div>`;
+  }).join('');
+}
+
+function restoreHist(hid) {
+  const h = S.history.find(x=>x.id===hid);
+  if(!h||!h.snapshot) return;
+  const {lane, item} = h.snapshot;
+  if(lane==='brain') S.brain.unshift(item);
+  else if(lane==='active') S.active.unshift(item);
+  else if(lane==='pending') S.pending.unshift(item);
+  addHist('restored', item.text, {to: ZONE_LABEL[lane]});
+  render(); renderHistory();
+}
+
+// ── TOAST ──────────────────────────────────────────────────
+function toast(msg, onUndo) {
+  clearTimeout(_toastT);
+  _undo = onUndo;
+  document.getElementById('toast-msg').textContent = msg;
+  document.getElementById('toast').classList.add('show');
+  _toastT = setTimeout(()=>{ document.getElementById('toast').classList.remove('show'); _undo=null; }, 4500);
+}
+
+document.getElementById('toast-undo').addEventListener('click', ()=>{
+  if(_undo){ _undo(); _undo=null; }
+  clearTimeout(_toastT);
+  document.getElementById('toast').classList.remove('show');
+});
+
+// ── BRAIN DUMP ─────────────────────────────────────────────
+function addBrain(text) {
+  const item = {id:uid(), text};
+  S.brain.unshift(item);
+  addHist('created', text, {to:'Brain Dump'});
+  renderBrain(); updateCounts(); save();
+}
+
+function delBrain(id) {
+  const i = S.brain.findIndex(x=>x.id===id); if(i<0) return;
+  const item = S.brain.splice(i,1)[0];
+  addHist('deleted', item.text, {snapshot:{lane:'brain',item}});
+  renderBrain(); updateCounts(); save();
+  toast(`Deleted "${clip(item.text,26)}"`, ()=>{ S.brain.splice(i,0,item); renderBrain(); updateCounts(); save(); });
+}
+
+// ── ACTIVE WORK ────────────────────────────────────────────
+function completeActive(id) {
+  const i = S.active.findIndex(x=>x.id===id); if(i<0) return;
+  const item = S.active.splice(i,1)[0];
+  const win = {id:uid(), text:item.text, wonAt:Date.now()};
+  S.wins.unshift(win);
+  addHist('completed', item.text);
+  renderActive(); renderWins(); updateCounts(); save();
+  toast(`✓ ${clip(item.text,32)}`, ()=>{
+    const wi = S.wins.findIndex(x=>x.id===win.id); if(wi>=0) S.wins.splice(wi,1);
+    S.active.splice(i,0,item); renderActive(); renderWins(); updateCounts(); save();
+  });
+}
+
+function delActive(id) {
+  const i = S.active.findIndex(x=>x.id===id); if(i<0) return;
+  const item = S.active.splice(i,1)[0];
+  addHist('deleted', item.text, {snapshot:{lane:'active',item}});
+  renderActive(); updateCounts(); save();
+  toast(`Deleted "${clip(item.text,26)}"`, ()=>{ S.active.splice(i,0,item); renderActive(); updateCounts(); save(); });
+}
+
+// ── PENDING ────────────────────────────────────────────────
+function pendToActive(id) {
+  const i = S.pending.findIndex(x=>x.id===id); if(i<0) return;
+  const item = S.pending.splice(i,1)[0];
+  S.active.unshift({id:uid(), text:item.text});
+  addHist('moved', item.text, {from:'Pending', to:'Active Work'});
+  renderActive(); renderPending(); updateCounts(); save();
+}
+
+function delPending(id) {
+  const i = S.pending.findIndex(x=>x.id===id); if(i<0) return;
+  const item = S.pending.splice(i,1)[0];
+  addHist('deleted', item.text, {snapshot:{lane:'pending',item}});
+  renderPending(); updateCounts(); save();
+  toast(`Deleted "${clip(item.text,26)}"`, ()=>{ S.pending.splice(i,0,item); renderPending(); updateCounts(); save(); });
+}
+
+// ── WINS ───────────────────────────────────────────────────
+function restoreWin(id) {
+  const i = S.wins.findIndex(x=>x.id===id); if(i<0) return;
+  const win = S.wins.splice(i,1)[0];
+  S.active.unshift({id:uid(), text:win.text});
+  addHist('restored', win.text, {to:'Active Work'});
+  renderActive(); renderWins(); updateCounts(); save();
+}
+
+// ── RENDER ─────────────────────────────────────────────────
+function render() { renderBrain(); renderActive(); renderPending(); renderWins(); updateCounts(); }
+
+function renderBrain() {
+  const body = document.getElementById('body-brain');
+  Array.from(body.querySelectorAll('.slip')).forEach(e=>e.remove());
+  document.getElementById('empty-brain').style.display = S.brain.length ? 'none' : '';
+  S.brain.forEach(item => {
+    const el = document.createElement('div');
+    el.className='slip'; el.dataset.zone='brain'; el.dataset.id=item.id;
+    el.innerHTML=`<span class="slip-text">${esc(item.text)}</span>
+      <button class="slip-x" data-action="del-brain" data-id="${item.id}" title="Remove">×</button>`;
+    body.appendChild(el); drag_make(el);
+  });
+}
+
+function renderActive() {
+  const body = document.getElementById('body-active');
+  Array.from(body.querySelectorAll('.card')).forEach(e=>e.remove());
+  document.getElementById('empty-active').style.display = S.active.length ? 'none' : '';
+  S.active.forEach((item,idx) => {
+    const isNow = idx===0;
+    const el = document.createElement('div');
+    el.className='card'+(isNow?' card-now':''); el.dataset.zone='active'; el.dataset.id=item.id;
+    el.innerHTML=`${isNow?'<div class="now-badge">Now</div>':''}
+      <div class="card-row">
+        <div class="card-check" data-action="complete" data-id="${item.id}" title="Mark as win">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        </div>
+        <div class="card-title ph" contenteditable="true" spellcheck="false" data-ph="What are you working on?" data-id="${item.id}">${esc(item.text)}</div>
+      </div>
+      <div class="card-tools"><button class="tool del" data-action="del-active" data-id="${item.id}" title="Delete">✕</button></div>`;
+    body.appendChild(el); drag_make(el);
+    const title = el.querySelector('.card-title');
+    title.addEventListener('blur', ()=>{ const t=title.textContent.trim(); if(t){item.text=t; save();} });
+    title.addEventListener('keydown', e=>{ if(e.key==='Enter'){e.preventDefault(); title.blur();} });
+  });
+}
+
+function renderPending() {
+  const body = document.getElementById('body-pending');
+  Array.from(body.querySelectorAll('.card')).forEach(e=>e.remove());
+  document.getElementById('empty-pending').style.display = S.pending.length ? 'none' : '';
+  S.pending.forEach(item => {
+    const el = document.createElement('div');
+    el.className='card'; el.dataset.zone='pending'; el.dataset.id=item.id;
+    el.innerHTML=`<div class="card-row">
+        <div class="card-title ph" contenteditable="true" spellcheck="false" data-ph="What is blocked?" data-id="${item.id}">${esc(item.text)}</div>
+      </div>
+      <div class="pend-meta">
+        <div class="pend-field"><span class="pend-label">Pending On</span>
+          <span class="pend-value ph" contenteditable="true" spellcheck="false" data-ph="who or what…" data-id="${item.id}" data-field="pendingOn">${esc(item.pendingOn||'')}</span></div>
+        <div class="pend-field"><span class="pend-label">Next Action</span>
+          <span class="pend-value ph" contenteditable="true" spellcheck="false" data-ph="when or what…" data-id="${item.id}" data-field="nextAction">${esc(item.nextAction||'')}</span></div>
+      </div>
+      <div class="card-tools">
+        <button class="tool up" data-action="pend-up" data-id="${item.id}" title="Move to Active Work">↑ Active</button>
+        <button class="tool del" data-action="del-pending" data-id="${item.id}" title="Delete">✕</button>
+      </div>`;
+    body.appendChild(el); drag_make(el);
+    el.querySelectorAll('[contenteditable]').forEach(ce=>{
+      ce.addEventListener('blur', ()=>{
+        const field=ce.dataset.field; const t=ce.textContent.trim();
+        if(field) item[field]=t; else if(t) item.text=t;
+        save();
+      });
+      ce.addEventListener('keydown', e=>{ if(e.key==='Enter'){e.preventDefault(); ce.blur();} });
+    });
+  });
+}
+
+function renderWins() {
+  const body = document.getElementById('body-wins');
+  Array.from(body.querySelectorAll('.win-item')).forEach(e=>e.remove());
+  document.getElementById('empty-wins').style.display = S.wins.length ? 'none' : '';
+  S.wins.forEach(win => {
+    const el = document.createElement('div');
+    el.className='win-item';
+    el.innerHTML=`<div class="win-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+      <span class="win-text">${esc(win.text)}</span>
+      <button class="win-restore" data-action="restore-win" data-id="${win.id}" title="Restore to Active Work">↩ restore</button>`;
+    body.appendChild(el);
+  });
+}
+
+function updateCounts() {
+  [['count-brain',S.brain],['count-active',S.active],['count-pending',S.pending],['count-wins',S.wins]]
+    .forEach(([id,arr])=>{ const el=document.getElementById(id); if(el) el.textContent=arr.length||''; });
+}
+
+// ── EVENT DELEGATION ───────────────────────────────────────
+document.addEventListener('click', e=>{
+  const btn = e.target.closest('[data-action]'); if(!btn) return;
+  const {action,id} = btn.dataset;
+  if(action==='del-brain') delBrain(id);
+  else if(action==='complete') completeActive(id);
+  else if(action==='del-active') delActive(id);
+  else if(action==='pend-up') pendToActive(id);
+  else if(action==='del-pending') delPending(id);
+  else if(action==='restore-win') restoreWin(id);
+});
+
+// ── BRAIN DUMP INPUT ───────────────────────────────────────
+document.getElementById('brain-input').addEventListener('keydown', function(e){
+  if(e.key!=='Enter') return;
+  e.preventDefault(); e.stopPropagation();
+  const text = this.value.trim();
+  if(text) { addBrain(text); this.value=''; }
+  this.focus();
+});
+
+// Press / anywhere to focus brain dump
+document.addEventListener('keydown', e=>{
+  if(e.key!=='/') return;
+  const a = document.activeElement;
+  if(a&&(a.isContentEditable||a.tagName==='INPUT'||a.tagName==='TEXTAREA')) return;
+  e.preventDefault();
+  document.getElementById('brain-input').focus();
+});
+
+// ── HISTORY DRAWER ─────────────────────────────────────────
+document.getElementById('hist-btn').addEventListener('click', ()=>{
+  renderHistory();
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('scrim').classList.add('open');
+});
+['drawer-close','scrim'].forEach(id=>{
+  document.getElementById(id).addEventListener('click', ()=>{
+    document.getElementById('drawer').classList.remove('open');
+    document.getElementById('scrim').classList.remove('open');
+  });
+});
+
+// ── WORK NOTES ─────────────────────────────────────────────
+function initNotes() {
+  const el = document.getElementById('worknotes');
+  el.value = S.worknotes||'';
+  el.addEventListener('input', ()=>{ S.worknotes=el.value; save(); });
+}
+
+// ── DRAG & DROP ────────────────────────────────────────────
+let drag = null;
+const DZ = {};
+['brain','active','pending','wins'].forEach(z=>{ DZ[z]=document.getElementById('body-'+z); });
+
+function drag_make(el){ el.addEventListener('mousedown', drag_start); }
+
+function drag_start(e) {
+  if(e.button!==0) return;
+  if(e.target.isContentEditable) return;
+  if(e.target.closest('button')) return;
+  e.preventDefault();
+  const el=e.currentTarget, zone=el.dataset.zone, id=el.dataset.id;
+  const text=(el.querySelector('.slip-text,.card-title')||el).textContent.trim();
+  const rect=el.getBoundingClientRect();
+  const ghost=document.createElement('div');
+  ghost.className='drag-ghost'; ghost.textContent=clip(text,52);
+  document.body.appendChild(ghost);
+  drag={el,zone,id,text,ghost,ox:e.clientX-rect.left,oy:e.clientY-rect.top};
+  el.classList.add('is-dragging');
+  drag_pos(e.clientX,e.clientY);
+  document.addEventListener('mousemove',drag_move);
+  document.addEventListener('mouseup',drag_end);
+}
+
+function drag_pos(x,y){ drag.ghost.style.left=(x-drag.ox)+'px'; drag.ghost.style.top=(y-drag.oy)+'px'; }
+
+function drag_move(e) {
+  drag_pos(e.clientX,e.clientY);
+  Object.values(DZ).forEach(z=>z.classList.remove('drag-over'));
+  const tz=drag_hit(e.clientX,e.clientY);
+  if(tz&&drag_can(drag.zone,tz)) DZ[tz].classList.add('drag-over');
+}
+
+function drag_end(e) {
+  document.removeEventListener('mousemove',drag_move);
+  document.removeEventListener('mouseup',drag_end);
+  Object.values(DZ).forEach(z=>z.classList.remove('drag-over'));
+  drag.el.classList.remove('is-dragging');
+  drag.ghost.remove();
+  const tz=drag_hit(e.clientX,e.clientY), ti=drag_idx(e.clientY,tz);
+  if(tz&&drag_can(drag.zone,tz)) drag_drop(drag.zone,drag.id,tz,ti);
+  drag=null;
+}
+
+function drag_hit(x,y) {
+  drag.ghost.style.display='none';
+  const el=document.elementFromPoint(x,y);
+  drag.ghost.style.display='';
+  if(!el) return null;
+  const b=el.closest('[data-zone]'); return b?b.dataset.zone:null;
+}
+
+function drag_idx(y,zone) {
+  if(!zone||!DZ[zone]) return 0;
+  const items=Array.from(DZ[zone].querySelectorAll('.card,.slip,.win-item'));
+  for(let i=0;i<items.length;i++){ const r=items[i].getBoundingClientRect(); if(y<r.top+r.height/2) return i; }
+  return items.length;
+}
+
+function drag_can(from,to) {
+  if(from===to&&['active','brain','pending'].includes(from)) return true;
+  if(from==='brain'&&(to==='active'||to==='pending')) return true;
+  if(from==='active'&&(to==='pending'||to==='wins')) return true;
+  if(from==='pending'&&to==='active') return true;
+  return false;
+}
+
+function drag_drop(fromZone,id,toZone,idx) {
+  const pool={brain:S.brain,active:S.active,pending:S.pending,wins:S.wins};
+  const fi=pool[fromZone].findIndex(x=>x.id===id); if(fi<0) return;
+  const [item]=pool[fromZone].splice(fi,1);
+
+  if(toZone==='brain')   S.brain.splice(idx,0,{id:item.id,text:item.text});
+  else if(toZone==='active') S.active.splice(idx,0,{id:item.id,text:item.text});
+  else if(toZone==='pending') S.pending.splice(idx,0,{id:item.id,text:item.text,pendingOn:item.pendingOn||'',nextAction:item.nextAction||''});
+  else if(toZone==='wins') { S.wins.splice(idx,0,{id:uid(),text:item.text,wonAt:Date.now()}); }
+
+  if(fromZone!==toZone) addHist('moved',item.text,{from:ZONE_LABEL[fromZone],to:ZONE_LABEL[toZone]});
+  render(); save();
+}
+
+// ── INIT ───────────────────────────────────────────────────
+load();
+
+// Date
+document.getElementById('date-label').textContent =
+  new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+
+// Targets
+['t1','t2'].forEach(id=>{
+  const el=document.getElementById(id);
+  el.textContent=S[id]||'';
+  el.addEventListener('input',()=>{ S[id]=el.textContent; save(); });
+});
+
+initNotes();
+render();
+</script>
+</body>
+</html>
